@@ -27,4 +27,11 @@ config.storageAdapters = {
     }
 };
 
+config.apiServer = {
+    protocol: process.env.IS_SECURE ? 'https' : 'http',
+    host: process.env.API_SERVER_SERVICE_HOST || 'localhost',
+    port: process.env.API_SERVER_SERVICE_PORT || 3000,
+    basePath: process.env.API_SERVER_SERVICE_PATH || 'api/v1'
+};
+
 module.exports = config;

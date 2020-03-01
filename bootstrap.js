@@ -5,6 +5,7 @@ const log = new Logger(main.serviceName, logger);
 const { StorageManager } = require('@hkube/storage-manager');
 const component = require('./lib/consts/componentNames').MAIN;
 const storageMigrator = require('./lib/migrators/storage');
+const pipelineMigrator = require('./lib/migrators/pipelines');
 class Bootstrap {
     async init() {
         try {
@@ -24,6 +25,8 @@ class Bootstrap {
             storageManagerJson.mode='json'
 
             await storageMigrator.run({ binary: storageManagerBinary, json: storageManagerJson, storageBinary: main.storageBinary });
+            await pipelineMigrator.run(main);
+            
             return main;
         }
         catch (error) {
