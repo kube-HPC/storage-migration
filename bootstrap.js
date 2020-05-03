@@ -11,22 +11,21 @@ class Bootstrap {
         try {
             this._handleErrors();
             log.info(`running application with env: ${configIt.env()}, version: ${main.version}, node: ${process.versions.node}`, { component });
-            const storageManagerBinary = new StorageManager();
-            const configBinary = { ...main };
-            configBinary.storageAdapters.fs.connection.binary = true;
-            configBinary.storageAdapters.s3.connection.binary = true;
-            await storageManagerBinary.init(configBinary, log)
-            storageManagerBinary.mode='binary'
-            const configJson = { ...main };
-            configJson.storageAdapters.fs.connection.binary = false;
-            configJson.storageAdapters.s3.connection.binary = false;
-            const storageManagerJson = new StorageManager();
-            await storageManagerJson.init(configJson, log)
-            storageManagerJson.mode='json'
+            const sourceStorageManager = new StorageManager();
+            const sourceConfig = { ...main };
+            sourceConfig.storageAdapters.fs.encoding = sourceConfig.sourceStorage;
+            sourceConfig.storageAdapters.s3.encoding = sourceConfig.sourceStorage;
+            await sourceStorageManager.init(sourceConfig, log);
 
-            await storageMigrator.run({ binary: storageManagerBinary, json: storageManagerJson, storageBinary: main.storageBinary });
+            const targetConfig = { ...main };
+            targetConfig.storageAdapters.fs.encoding = targetConfig.targetStorage;
+            targetConfig.storageAdapters.s3.encoding = targetConfig.targetStorage;
+            const targetStorageManager = new StorageManager();
+            await targetStorageManager.init(targetConfig, log)
+
+            await storageMigrator.run({ sourceStorageManager, targetStorageManager });
             await pipelineMigrator.run(main);
-            
+
             return main;
         }
         catch (error) {
