@@ -6,32 +6,30 @@ const { StorageManager } = require('@hkube/storage-manager');
 const component = require('./lib/consts/componentNames').MAIN;
 const storageMigrator = require('./lib/migrators/storage');
 const pipelineMigrator = require('./lib/migrators/pipelines');
+
 class Bootstrap {
     async init() {
         try {
             this._handleErrors();
             log.info(`running application with env: ${configIt.env()}, version: ${main.version}, node: ${process.versions.node}`, { component });
-            const sourceStorageManager = new StorageManager();
-            const sourceConfig = { ...main };
-            sourceConfig.storageAdapters.fs.encoding = sourceConfig.sourceStorage;
-            sourceConfig.storageAdapters.s3.encoding = sourceConfig.sourceStorage;
-            await sourceStorageManager.init(sourceConfig, log);
 
-            const targetConfig = { ...main };
-            targetConfig.storageAdapters.fs.encoding = targetConfig.targetStorage;
-            targetConfig.storageAdapters.s3.encoding = targetConfig.targetStorage;
-            const targetStorageManager = new StorageManager();
-            await targetStorageManager.init(targetConfig, log)
+            const source = await this._createStorage(main.sourceStorage);
+            const target = await this._createStorage(main.targetStorage);
 
-            await storageMigrator.run({ sourceStorageManager, targetStorageManager });
+            await storageMigrator.run({ source, target });
             await pipelineMigrator.run(main);
-
-            return main;
         }
         catch (error) {
             this._onInitFailed(error);
         }
-        return true;
+    }
+
+    async _createStorage(encoding) {
+        const storageManager = new StorageManager();
+        const config = { ...main };
+        config.storageAdapters[config.defaultStorage].encoding = encoding;
+        await storageManager.init(config, log);
+        return storageManager;
     }
 
     _onInitFailed(error) {

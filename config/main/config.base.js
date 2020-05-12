@@ -1,12 +1,9 @@
 const config = {};
 const packageJson = require(process.cwd() + '/package.json');
 config.version = packageJson.version;
+config.serviceName = packageJson.name;
 
-const formatter = require(process.cwd() + '/lib/utils/formatters');
-
-config.serviceName = 'storage-migration';
 config.defaultStorage = process.env.DEFAULT_STORAGE || 's3';
-
 config.clusterName = process.env.CLUSTER_NAME || 'local';
 config.sourceStorage = process.env.SOURCE_STORAGE_ENCODING || 'bson';
 config.targetStorage = process.env.STORAGE_ENCODING || 'msgpack';
