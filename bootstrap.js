@@ -6,33 +6,30 @@ const { StorageManager } = require('@hkube/storage-manager');
 const component = require('./lib/consts/componentNames').MAIN;
 const storageMigrator = require('./lib/migrators/storage');
 const pipelineMigrator = require('./lib/migrators/pipelines');
+
 class Bootstrap {
     async init() {
         try {
             this._handleErrors();
             log.info(`running application with env: ${configIt.env()}, version: ${main.version}, node: ${process.versions.node}`, { component });
-            const storageManagerBinary = new StorageManager();
-            const configBinary = { ...main };
-            configBinary.storageAdapters.fs.connection.binary = true;
-            configBinary.storageAdapters.s3.connection.binary = true;
-            await storageManagerBinary.init(configBinary, log)
-            storageManagerBinary.mode='binary'
-            const configJson = { ...main };
-            configJson.storageAdapters.fs.connection.binary = false;
-            configJson.storageAdapters.s3.connection.binary = false;
-            const storageManagerJson = new StorageManager();
-            await storageManagerJson.init(configJson, log)
-            storageManagerJson.mode='json'
 
-            await storageMigrator.run({ binary: storageManagerBinary, json: storageManagerJson, storageBinary: main.storageBinary });
+            const source = await this._createStorage(main.sourceStorage);
+            const target = await this._createStorage(main.targetStorage);
+
+            await storageMigrator.run({ source, target });
             await pipelineMigrator.run(main);
-            
-            return main;
         }
         catch (error) {
             this._onInitFailed(error);
         }
-        return true;
+    }
+
+    async _createStorage(encoding) {
+        const storageManager = new StorageManager();
+        const config = { ...main };
+        config.storageAdapters[config.defaultStorage].encoding = encoding;
+        await storageManager.init(config, log);
+        return storageManager;
     }
 
     _onInitFailed(error) {
