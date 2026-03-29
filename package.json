@@ -13,8 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "@hkube/config": "^2.0.7",
-    "@hkube/logger": "^1.0.25",
-    "@hkube/storage-manager": "^2.0.19",
+    "@hkube/logger": "^2.0.1",
+    "@hkube/storage-manager": "^2.1.1",
     "axios": "^0.19.2"
   },
   "devDependencies": {
